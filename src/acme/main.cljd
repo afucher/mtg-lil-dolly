@@ -1,0 +1,56 @@
+(ns acme.main
+  (:require ["package:flutter/material.dart" :as m]
+            [cljd.flutter :as f]))
+
+(def color-map
+  {:white m/Colors.white
+   :red m/Colors.red
+   :blue m/Colors.blue
+   :black m/Colors.black
+   :green m/Colors.green
+   :poison m/Colors.purple})
+
+(def home
+  (f/widget
+   (m/Scaffold
+    .appBar (m/AppBar .title (m/Text "Counters")))
+   .body
+   m/Center
+   (m/Column .mainAxisAlignment m/MainAxisAlignment.center)
+   .children
+   (for [k [:white :blue :black :red :green :poison]]
+     (f/widget
+      m/Expanded
+      (m/ColoredBox
+       .color (k color-map)
+       .child
+       (m/Row
+        .mainAxisAlignment m/MainAxisAlignment.center
+        .children
+        [(m/Text (str k))
+         (f/widget
+          :get [:counters]
+          :let [_ (dart:core/print "build -")]
+          (m/ElevatedButton .onPressed #(swap! counters update k dec))
+          (m/Text "-"))
+         (f/widget
+          :get {:value-of [:counters]}
+          :watch [{n k} counters]
+          :let [_ (dart:core/print (str "build text " k))]
+          (m/Text (str n) .style (m/TextStyle
+                                  .color (if (= k :black) m/Colors.white m/Colors.black)
+                                  .fontSize 32.0)))
+         (f/widget
+          :get [:counters]
+          :let [_ (dart:core/print "build +")]
+          (m/ElevatedButton .onPressed #(swap! counters update k inc))
+          (m/Text "+"))]))))))
+
+(defn main []
+  (f/run
+   (m/MaterialApp
+    .title "Welcome to Flutter"
+    .theme (m/ThemeData .primarySwatch m.Colors/pink))
+   .home
+   :bind {:counters (atom {:white 0 :blue 0 :black 0 :red 0 :green 0 :poison 0})}
+   home)) 
