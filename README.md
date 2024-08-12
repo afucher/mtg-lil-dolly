@@ -1,16 +1,14 @@
-# cljd_mtg_lil_dolly
+# MTG Lil Dolly
 
-A new Flutter project.
+Seu companheiro para jogar Magic!
 
-## Getting Started
+## Sobre
 
-This project is a starting point for a Flutter application.
+Projeto para aprender ClojureDart e criar um contador para auxiliar em jogos de Magic.
 
-A few resources to get you started if this is your first Flutter project:
+### Rodando
+Para rodar executar a seguinte linha de comando (troque windows pela plataforma que deseja rodar):
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+```shell
+clj -M:cljd flutter -d windows
+```
