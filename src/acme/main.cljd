@@ -8,7 +8,8 @@
    :blue m/Colors.blue
    :black m/Colors.black
    :green m/Colors.green
-   :poison m/Colors.purple})
+   :poison m/Colors.purple
+   :colorless m/Colors.grey})
 
 (def home
   (f/widget
@@ -18,11 +19,11 @@
    m/Center
    (m/Column .mainAxisAlignment m/MainAxisAlignment.center)
    .children
-   (for [k [:white :blue :black :red :green :poison]]
+   (for [k [:white :blue :black :red :green :colorless :poison :storm]]
      (f/widget
       m/Expanded
       (m/ColoredBox
-       .color (k color-map)
+       .color (k color-map m/Colors.white)
        .child
        (m/Row
         .mainAxisAlignment m/MainAxisAlignment.center
@@ -30,8 +31,10 @@
         [(m/Text (str k))
          (f/widget
           :get [:counters]
+          :watch [_ counters]
           :let [_ (dart:core/print "build -")]
-          (m/ElevatedButton .onPressed #(swap! counters update k dec))
+          (m/ElevatedButton
+           .onPressed (when (pos? (k @counters)) #(swap! counters update k dec)))
           (m/Text "-"))
          (f/widget
           :get {:value-of [:counters]}
@@ -52,5 +55,5 @@
     .title "Welcome to Flutter"
     .theme (m/ThemeData .primarySwatch m.Colors/pink))
    .home
-   :bind {:counters (atom {:white 0 :blue 0 :black 0 :red 0 :green 0 :poison 0})}
+   :bind {:counters (atom {:white 0 :blue 0 :black 0 :red 0 :green 0 :colorless 0 :storm 0 :poison 0})}
    home)) 
