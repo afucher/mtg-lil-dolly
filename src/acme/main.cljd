@@ -3,6 +3,8 @@
             ["package:flutter/widgets.dart" :as widgets]
             ["package:wakelock_plus/wakelock_plus.dart" :as wl]
             [cljd.flutter :as f]))
+(def mana-colors
+  [:white :red :blue :black :green :colorless])
 
 (def color-map
   {:white m/Colors.white
@@ -13,10 +15,32 @@
    :poison m/Colors.purple
    :colorless m/Colors.grey})
 
+(defn zero! [state k]
+  (swap! state assoc k 0))
+
+(defn end-turn! [state]
+  (doseq [mana mana-colors] (zero! state mana))
+  (zero! state :storm))
+
 (def home
   (f/widget
    (m/Scaffold
-    .appBar (m/AppBar .title (m/Text "Counters")))
+    .appBar
+    (m/AppBar
+     .title (m/Text "Counters")
+     .actions [(f/widget
+                :get [:counters]
+                (m/IconButton .icon (m/Icon m/Icons.autorenew))
+                .onPressed
+                (fn []
+                  (end-turn! counters)
+                  nil))
+               (f/widget
+                (m/IconButton .icon (m/Icon m/Icons.cancel))
+                .onPressed
+                (fn []
+                  ()
+                  nil))]))
    .body
    m/Center
    (m/Column .mainAxisAlignment m/MainAxisAlignment.center)
@@ -24,40 +48,42 @@
    (for [k [:white :blue :black :red :green :colorless :poison :storm]]
      (f/widget
       m/Expanded
-      (m/ColoredBox
-       .color (k color-map m/Colors.white)
-       .child
-       (m/Row
-        .mainAxisAlignment m/MainAxisAlignment.center
-        .children
-        [(m/Text (str k))
-         (f/widget
-          :get [:counters]
-          :watch [_ counters]
-          :let [_ (dart:core/print "build -")]
-          (m/ElevatedButton
-           .onPressed (when (pos? (k @counters)) #(swap! counters update k dec)))
-          (m/Text "-"))
-         (f/widget
-          :get {:value-of [:counters]}
-          :watch [{n k} counters]
-          :let [_ (dart:core/print (str "build text " k))]
-          (m/Text (str n) .style (m/TextStyle
-                                  .color (if (= k :black) m/Colors.white m/Colors.black)
-                                  .fontSize 32.0)))
-         (f/widget
-          :get [:counters]
-          :let [_ (dart:core/print "build +")]
-          (m/ElevatedButton .onPressed #(swap! counters update k inc))
-          (m/Text "+"))]))))))
+      :color (k color-map m/Colors.white)
+      (m/Row
+       .mainAxisAlignment m/MainAxisAlignment.center
+       .children
+       [(m/Text (str k))
+        (f/widget
+         :get [:counters]
+         :watch [{n k} counters]
+         :let [_ (dart:core/print "build -")]
+         (m/ElevatedButton
+          .onPressed (when (pos? n) #(swap! counters update k dec)))
+         (m/Text "-"))
+        (f/widget
+         :get {:value-of [:counters]}
+         :watch [{n k} counters]
+         :let [_ (dart:core/print (str "build text " k))]
+         (m/Text (str n) .style (m/TextStyle
+                                 .color (if (= k :black) m/Colors.white m/Colors.black)
+                                 .fontSize 32.0)))
+        (f/widget
+         :get [:counters]
+         :let [_ (dart:core/print "build +")]
+         (m/ElevatedButton .onPressed #(swap! counters update k inc))
+         (m/Text "+"))])))))
+
+(def initial-state
+  (->> (conj mana-colors :poison :storm)
+       (reduce #(assoc %1 %2 0) {})))
 
 (defn main []
   (.ensureInitialized widgets/WidgetsFlutterBinding)
   (.enable wl/WakelockPlus)
   (f/run
    (m/MaterialApp
-    .title "Welcome to Flutter"
+    .title "MTG lil Dolly"
     .theme (m/ThemeData .primarySwatch m.Colors/pink))
    .home
-   :bind {:counters (atom {:white 0 :blue 0 :black 0 :red 0 :green 0 :colorless 0 :storm 0 :poison 0})}
+   :bind {:counters (atom initial-state)}
    home)) 
