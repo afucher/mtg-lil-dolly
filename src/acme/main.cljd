@@ -1,5 +1,7 @@
 (ns acme.main
   (:require ["package:flutter/material.dart" :as m]
+            ["package:flutter/widgets.dart" :as widgets]
+            ["package:wakelock_plus/wakelock_plus.dart" :as wl]
             [cljd.flutter :as f]))
 
 (def color-map
@@ -50,6 +52,8 @@
           (m/Text "+"))]))))))
 
 (defn main []
+  (.ensureInitialized widgets/WidgetsFlutterBinding)
+  (.enable wl/WakelockPlus)
   (f/run
    (m/MaterialApp
     .title "Welcome to Flutter"
