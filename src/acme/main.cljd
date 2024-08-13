@@ -3,8 +3,16 @@
             ["package:flutter/widgets.dart" :as widgets]
             ["package:wakelock_plus/wakelock_plus.dart" :as wl]
             [cljd.flutter :as f]))
+
 (def mana-colors
   [:white :red :blue :black :green :colorless])
+
+(def initial-config-state
+  (->> mana-colors
+       (reduce #(assoc %1 %2 false) {})))
+
+(defonce configuration-state
+  (atom initial-config-state))
 
 (def color-map
   {:white m/Colors.white
@@ -22,25 +30,54 @@
   (doseq [mana mana-colors] (zero! state mana))
   (zero! state :storm))
 
+(defn configuration []
+  (m/Scaffold
+   .appBar (m/AppBar .title (m/Text "Second Route"))
+   .body
+   (m/Column
+    .mainAxisAlignment m/MainAxisAlignment.center
+    .children
+    (for [k mana-colors]
+      (m/Row
+       .mainAxisAlignment m/MainAxisAlignment.center
+       .children
+       [(m/Text (str k))
+        (f/widget
+         :watch [{n k} configuration-state]
+         :let [_ (dart:core/print k)
+               __ (dart:core/print n)]
+         (m/Switch
+          .value (k @configuration-state)
+          .onChanged (fn [_] (swap! configuration-state assoc k (not (k @configuration-state))))))])))))
+
+
 (def home
   (f/widget
    (m/Scaffold
     .appBar
     (m/AppBar
      .title (m/Text "Counters")
-     .actions [(f/widget
-                :get [:counters]
-                (m/IconButton .icon (m/Icon m/Icons.autorenew))
-                .onPressed
-                (fn []
-                  (end-turn! counters)
-                  nil))
-               (f/widget
-                (m/IconButton .icon (m/Icon m/Icons.cancel))
-                .onPressed
-                (fn []
-                  ()
-                  nil))]))
+     .actions
+     [(f/widget
+       :get [:counters]
+       (m/IconButton .icon (m/Icon m/Icons.autorenew))
+       .onPressed
+       (fn []
+         (end-turn! counters)
+         nil))
+      (f/widget
+       (m/IconButton .icon (m/Icon m/Icons.cancel))
+       .onPressed
+       (fn []
+         ()
+         nil))
+      (f/widget
+       :get [m/Navigator]
+       (m/IconButton .icon (m/Icon m/Icons.settings))
+       .onPressed
+       #(do
+          (.push navigator (#/(m/MaterialPageRoute Object) .builder (f/build (configuration))))
+          nil))]))
    .body
    m/Center
    (m/Column .mainAxisAlignment m/MainAxisAlignment.center)
@@ -73,7 +110,7 @@
          (m/ElevatedButton .onPressed #(swap! counters update k inc))
          (m/Text "+"))])))))
 
-(def initial-state
+(def initial-counter-state
   (->> (conj mana-colors :poison :storm)
        (reduce #(assoc %1 %2 0) {})))
 
@@ -85,5 +122,5 @@
     .title "MTG lil Dolly"
     .theme (m/ThemeData .primarySwatch m.Colors/pink))
    .home
-   :bind {:counters (atom initial-state)}
+   :bind {:counters (atom initial-counter-state)}
    home)) 
