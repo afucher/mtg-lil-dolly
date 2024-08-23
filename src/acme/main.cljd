@@ -7,12 +7,6 @@
 (def mana-colors
   [:white :red :blue :black :green :colorless])
 
-(def initial-config-state
-  (->> mana-colors
-       (reduce #(assoc %1 %2 false) {})))
-
-(defonce configuration-state
-  (atom initial-config-state))
 
 (def color-map
   {:white m/Colors.white
@@ -23,6 +17,16 @@
    :poison m/Colors.purple
    :colorless m/Colors.grey})
 
+(def all-counters
+  (conj mana-colors :poison :storm))
+
+(def initial-config-state
+  (->> all-counters
+       (reduce #(assoc %1 %2 true) {})))
+
+(defonce configuration-state
+  (atom initial-config-state))
+
 (defn zero! [state k]
   (swap! state assoc k 0))
 
@@ -32,12 +36,12 @@
 
 (defn configuration []
   (m/Scaffold
-   .appBar (m/AppBar .title (m/Text "Second Route"))
+   .appBar (m/AppBar .title (m/Text "Configuration"))
    .body
    (m/Column
     .mainAxisAlignment m/MainAxisAlignment.center
     .children
-    (for [k mana-colors]
+    (for [k all-counters]
       (m/Row
        .mainAxisAlignment m/MainAxisAlignment.center
        .children
@@ -47,7 +51,7 @@
          :let [_ (dart:core/print k)
                __ (dart:core/print n)]
          (m/Switch
-          .value (k @configuration-state)
+          .value (k @configuration-state false)
           .onChanged (fn [_] (swap! configuration-state assoc k (not (k @configuration-state))))))])))))
 
 
@@ -80,35 +84,39 @@
           nil))]))
    .body
    m/Center
-   (m/Column .mainAxisAlignment m/MainAxisAlignment.center)
-   .children
-   (for [k [:white :blue :black :red :green :colorless :poison :storm]]
-     (f/widget
-      m/Expanded
-      :color (k color-map m/Colors.white)
-      (m/Row
-       .mainAxisAlignment m/MainAxisAlignment.center
-       .children
-       [(m/Text (str k))
-        (f/widget
-         :get [:counters]
-         :watch [{n k} counters]
-         :let [_ (dart:core/print "build -")]
-         (m/ElevatedButton
-          .onPressed (when (pos? n) #(swap! counters update k dec)))
-         (m/Text "-"))
-        (f/widget
-         :get {:value-of [:counters]}
-         :watch [{n k} counters]
-         :let [_ (dart:core/print (str "build text " k))]
-         (m/Text (str n) .style (m/TextStyle
-                                 .color (if (= k :black) m/Colors.white m/Colors.black)
-                                 .fontSize 32.0)))
-        (f/widget
-         :get [:counters]
-         :let [_ (dart:core/print "build +")]
-         (m/ElevatedButton .onPressed #(swap! counters update k inc))
-         (m/Text "+"))])))))
+   (f/widget
+    :watch [config-state configuration-state]
+    (m/Column .mainAxisAlignment m/MainAxisAlignment.center)
+    .children
+    (for [k all-counters
+          :let [enabled? (k config-state)]
+          :when (or enabled? (nil? enabled?))]
+      (f/widget
+       m/Expanded
+       :color (k color-map m/Colors.white)
+       (m/Row
+        .mainAxisAlignment m/MainAxisAlignment.center
+        .children
+        [(m/Text (str k))
+         (f/widget
+          :get [:counters]
+          :watch [{n k} counters]
+          :let [_ (dart:core/print "build -")]
+          (m/ElevatedButton
+           .onPressed (when (pos? n) #(swap! counters update k dec)))
+          (m/Text "-"))
+         (f/widget
+          :get {:value-of [:counters]}
+          :watch [{n k} counters]
+          :let [_ (dart:core/print (str "build text " k))]
+          (m/Text (str n) .style (m/TextStyle
+                                  .color (if (= k :black) m/Colors.white m/Colors.black)
+                                  .fontSize 32.0)))
+         (f/widget
+          :get [:counters]
+          :let [_ (dart:core/print "build +")]
+          (m/ElevatedButton .onPressed #(swap! counters update k inc))
+          (m/Text "+"))]))))))
 
 (def initial-counter-state
   (->> (conj mana-colors :poison :storm)
